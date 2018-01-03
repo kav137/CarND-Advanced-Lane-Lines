@@ -3,8 +3,6 @@ import glob
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-
-%matplotlib inline
 #%%
 class Calibrator:
     processing_log = []
@@ -12,10 +10,10 @@ class Calibrator:
     # processing related shared variables
     objpoints = []
     imgpoints = []
-    pattern_size = None
+    pattern_size = (9, 6)
 
     # undistortion related shared variables
-    image_size = None
+    image_size = (1280, 720)
     mtx = None
     dist = None
     rvecs = None
@@ -26,7 +24,7 @@ class Calibrator:
     @staticmethod
     def get_object_points():
         objp = np.zeros((Calibrator.pattern_size[0] * Calibrator.pattern_size[1], 3), dtype=np.float32)
-        objp[:,:2] = np.mgrid[0:Calibrator.pattern_size[0], 0:Calibrator.pattern_size[1]].T.reshape(-1, 2)
+        objp[:, :2] = np.mgrid[0:Calibrator.pattern_size[0], 0:Calibrator.pattern_size[1]].T.reshape(-1, 2)
         return objp
 
     @staticmethod
@@ -48,10 +46,7 @@ class Calibrator:
             Calibrator.processing_log.append('{} - failed to find corners'.format(image_path))
 
         if debug:
-            image_augmented = cv2.drawChessboardCorners(image, Calibrator.pattern_size, corners, ret)
-            plt.title(image_path)
-            plt.imshow(image_augmented)
-            plt.show()
+            Calibrator.show_corners(image, corners, ret)
 
     @staticmethod
     def calculate_distortion_parameters():
@@ -90,24 +85,32 @@ class Calibrator:
         undistorted_image = undistorted_image[y:y+h, x:x+w]
 
         if debug:
-            plt.figure(figsize=(10,10))
-            plt.title('Original vs undistorted')
-            plt.subplot(121)
-            plt.imshow(image)
-            plt.subplot(122)
-            plt.imshow(undistorted_image)
-            plt.show()
+            Calibrator.show_image_changes(image, undistorted_image)
 
         return undistorted_image
 
+    @staticmethod
+    def show_image_changes(image, undistorted_image):
+        plt.figure(figsize=(10, 10))
+        plt.title('Original vs undistorted')
+        plt.subplot(121)
+        plt.imshow(image)
+        plt.subplot(122)
+        plt.imshow(undistorted_image)
+        plt.show()
 
-Calibrator.pattern_size = (9,6)
-Calibrator.image_size = (1280, 720)
+    @staticmethod
+    def show_corners(image, corners, ret):
+        image_augmented = cv2.drawChessboardCorners(image, Calibrator.pattern_size, corners, ret)
+        plt.imshow(image_augmented)
+        plt.show()
 
-for image_path in glob.glob('.\\camera_cal\\*'):
-    Calibrator.process_calibration_image(image_path)
-Calibrator.calculate_distortion_parameters()
-for image_path in glob.glob('.\\camera_cal\\*'):
-    image = cv2.imread(image_path)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    Calibrator.undistort_image(image, debug=True)
+    @staticmethod
+    def calibrate(path='.\\camera_cal\\*', pattern_size=(9, 6), image_size=(1280, 720)):
+        Calibrator.pattern_size = pattern_size
+        Calibrator.image_size = image_size
+
+        for image_path in glob.glob(path):
+            Calibrator.process_calibration_image(image_path)
+        Calibrator.calculate_distortion_parameters()
+        print('Calibrator :: Calibration performed successfully')
