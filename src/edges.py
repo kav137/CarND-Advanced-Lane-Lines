@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 #%%
 def get_sobel(image, direction='x', threshold=(50, 100), kernel_size=9, debug=False):
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
     sobel = None
     if direction == 'x':
@@ -27,7 +27,7 @@ def get_sobel(image, direction='x', threshold=(50, 100), kernel_size=9, debug=Fa
     return mask
 
 def get_sobel_magnitude(image, threshold=(50, 100), kernel_size=9, debug=False):
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
     sobelx = cv2.Sobel(gray_image, cv2.CV_64F, 1, 0, ksize=kernel_size)
     sobely = cv2.Sobel(gray_image, cv2.CV_64F, 0, 1, ksize=kernel_size)
@@ -45,7 +45,7 @@ def get_sobel_magnitude(image, threshold=(50, 100), kernel_size=9, debug=False):
     return mask
 
 def get_sobel_angular(image, threshold=(0.8, 1.2), kernel_size=9, debug=False):
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
     sobelx = cv2.Sobel(gray_image, cv2.CV_64F, 1, 0, ksize=kernel_size)
     sobely = cv2.Sobel(gray_image, cv2.CV_64F, 0, 1, ksize=kernel_size)
@@ -61,7 +61,7 @@ def get_sobel_angular(image, threshold=(0.8, 1.2), kernel_size=9, debug=False):
     return mask
 
 def get_hls_mask(image, threshold_s=(150, 230), threshold_h=(15, 35)):
-    hls_image = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
+    hls_image = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
 
     s_channel = hls_image[:,:,2]
     h_channel = hls_image[:,:,0]
@@ -82,12 +82,15 @@ def get_mask(image, debug=False):
     hls = get_hls_mask(image)
 
     if debug:
-        image_new = np.dstack((angular, hls, sobelxy)) * 255
-        return image_new
+        r_channel = np.zeros_like(angular)
+        r_channel[(sobelx == 1) & (sobely == 1) & (angular == 1)] = 1
+
+        rgb_example = np.dstack((r_channel, hls, sobelxy)) * 255
+        return rgb_example
 
     combined_mask = np.zeros_like(sobelx)
-    # combined_mask[((sobelx == 1) & (sobely == 1)) & ((sobelxy == 1) | (angular == 1) | (hls == 1))] = 255
-    combined_mask[((sobelx == 1) & (sobely == 1) & (angular == 1)) | ((sobelxy == 1) | (hls == 1))] = 255
+    combined_mask[((sobelx == 1) & (sobely == 1) & (angular == 1)) | ((sobelxy == 1) | (hls == 1))] = 1
 
 
     return combined_mask
+

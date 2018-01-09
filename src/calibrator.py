@@ -45,7 +45,7 @@ class Calibrator:
         else:
             Calibrator.processing_log.append('{} - failed to find corners'.format(image_path))
 
-        if debug:
+        if debug and ret:
             Calibrator.show_corners(image, corners, ret)
 
     @staticmethod
@@ -83,6 +83,7 @@ class Calibrator:
 
         x, y, w, h = Calibrator.roi
         undistorted_image = undistorted_image[y:y+h, x:x+w]
+        undistorted_image = cv2.resize(undistorted_image, Calibrator.image_size)
 
         if debug:
             Calibrator.show_image_changes(image, undistorted_image)
@@ -106,11 +107,11 @@ class Calibrator:
         plt.show()
 
     @staticmethod
-    def calibrate(path='.\\camera_cal\\*', pattern_size=(9, 6), image_size=(1280, 720)):
+    def calibrate(path='.\\camera_cal\\*', pattern_size=(9, 6), image_size=(1280, 720), debug=False):
         Calibrator.pattern_size = pattern_size
         Calibrator.image_size = image_size
 
         for image_path in glob.glob(path):
-            Calibrator.process_calibration_image(image_path)
+            Calibrator.process_calibration_image(image_path, debug)
         Calibrator.calculate_distortion_parameters()
         print('Calibrator :: Calibration performed successfully')
